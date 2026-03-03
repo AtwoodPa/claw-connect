@@ -1,0 +1,39 @@
+---
+description: 后端 Web Channel 插件开发规范
+globs: openclaw-web-channel/**/*
+alwaysApply: false
+---
+
+# OpenClaw Web Channel 后端插件规范
+
+## 技术栈
+- Node.js ≥18, TypeScript 5.3+, ESM (`"type": "module"`)
+- ws + Express + cors + jsonwebtoken + zod + uuid
+- peerDependencies: openclaw >=2026.2.0
+
+## 文件结构
+```
+openclaw-web-channel/
+├── openclaw.plugin.json
+├── src/
+│   ├── index.ts        # register(api) 入口
+│   ├── channel.ts      # ChannelPlugin 实现
+│   ├── server.ts       # WebChannelServer
+│   ├── config.ts       # Zod 配置校验
+│   ├── types.ts
+│   ├── handlers/
+│   └── utils/
+└── tests/
+```
+
+## 必须遵循
+1. **入口**: 导出默认函数 `register(api: OpenClawPluginApi)`
+2. **配置**: 使用 Zod 校验，类型从 `pluginConfigSchema.parse()` 推导
+3. **Channel**: 实现 `ChannelPlugin` 接口 (config, outbound, status)
+4. **Server**: WebSocket 与 HTTP 共用同一 server，path `/ws`
+5. **认证**: JWT 中间件，支持 `auth` 消息类型
+6. **消息转发**: `chat` 消息通过 `ctx.call('agent.run', ...)` 转发到 Gateway
+
+## 错误处理
+- 所有 async 函数必须有 try/catch，记录到 `api.logger`
+- 客户端断开时返回 `{ ok: false, error: 'Client disconnected', retryable: true }`

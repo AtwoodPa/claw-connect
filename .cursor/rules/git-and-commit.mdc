@@ -1,0 +1,19 @@
+---
+description: Git 提交与分支规范
+alwaysApply: true
+---
+
+# Git 规范
+
+## Commit Message
+- 使用 Conventional Commits: `type(scope): message`
+- 类型: feat, fix, docs, style, refactor, test, chore
+- 示例: `feat(web-channel): add JWT auth middleware`
+
+## 分支
+- 主分支: `main`
+- 功能: `feat/xxx`，修复: `fix/xxx`
+
+## 不提交
+- node_modules, dist, .env, 本地密钥
+- 使用 .cursorignore / .gitignore 排除

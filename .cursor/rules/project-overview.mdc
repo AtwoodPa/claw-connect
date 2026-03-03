@@ -1,0 +1,35 @@
+---
+description: 项目整体结构与 PRD 引用
+alwaysApply: true
+---
+
+# Claw-Connect 项目概述
+
+## 项目目标
+开发 OpenClaw Web Channel 全栈方案：
+- **后端**: openclaw-web-channel 插件 — 浏览器通过 WebSocket/HTTP 连接 OpenClaw Gateway
+- **前端**: web-channel-vue — Vue 3 聊天界面组件库
+
+## 目录结构
+```
+claw-connect/
+├── openclaw-web-channel/     # 后端插件 (Node.js + TypeScript + Express + WebSocket)
+├── web-channel-vue/          # 前端 Vue 组件库
+├── docs/
+│   ├── guide/
+│   │   ├── PRD_WebChannelPlugin.md   # 后端 PRD
+│   │   ├── PRD_Vue_Chat_UI.md        # 前端 PRD
+│   │   └── Cursor_Development_Guide.md
+│   └── srs/                  # 详细设计文档
+└── openclaw(源代码)/         # OpenClaw 源码（参考用，不直接修改）
+```
+
+## 开发时引用 PRD
+- 修改后端插件：先查阅 `@docs/guide/PRD_WebChannelPlugin.md`
+- 修改前端界面：先查阅 `@docs/guide/PRD_Vue_Chat_UI.md`
+- 开发流程参考：`@docs/guide/Cursor_Development_Guide.md`
+
+## 通信协议约定
+- WebSocket 路径: `/ws`
+- 消息类型: `connected`, `auth`, `auth_success`, `chat`, `message`, `ping`, `pong`, `stop`, `error`, `file`
+- 前端默认连接: `ws://{gatewayHost}:{port}/ws`

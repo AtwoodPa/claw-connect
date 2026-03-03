@@ -1,0 +1,35 @@
+---
+description: TypeScript 编码规范
+globs: **/*.ts,**/*.tsx,**/*.vue
+alwaysApply: false
+---
+
+# TypeScript 编码规范
+
+## 类型
+- 使用严格类型，避免 `any`
+- 优先 `interface` 定义对象，`type` 用于联合/工具类型
+- 导出类型使用 `export type` 或 `export interface`
+
+## 错误处理
+```typescript
+// 推荐
+try {
+  await doSomething();
+} catch (e) {
+  logger.error('Failed', { error: e });
+  throw new AppError('Message', { cause: e });
+}
+
+// 避免
+try {
+  await doSomething();
+} catch (e) {}
+```
+
+## 异步
+- async 函数必须有返回值类型或 void
+- 优先 `async/await` 而非 raw Promise
+
+## 文件大小
+- 单文件建议 < 500 行，超则拆分为 helpers 或子模块

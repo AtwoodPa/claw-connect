@@ -1,0 +1,243 @@
+# Claw-Connect 完整开发规则（.cursorrules-all）
+
+本文档为 OpenClaw Web Channel 全栈项目的完整 Cursor 规则，供 AI 与开发者参考。  
+细分类规则在 `.cursor/rules/` 下按文件类型自动应用；本文档作为集中参考。
+
+---
+
+## 一、项目概述
+
+### 1.1 目标
+- **后端**: openclaw-web-channel — OpenClaw Channel Plugin，使浏览器通过 WebSocket/HTTP 连接 Gateway
+- **前端**: web-channel-vue — Vue 3 聊天界面组件库，开箱即用
+
+### 1.2 目录结构
+```
+claw-connect/
+├── openclaw-web-channel/     # 后端插件
+├── web-channel-vue/          # 前端 Vue 组件库
+├── docs/
+│   ├── guide/
+│   │   ├── PRD_WebChannelPlugin.md
+│   │   ├── PRD_Vue_Chat_UI.md
+│   │   └── Cursor_Development_Guide.md
+│   └── srs/
+└── openclaw(源代码)/         # 参考用，不直接修改
+```
+
+### 1.3 文档引用
+- 后端开发: `@docs/guide/PRD_WebChannelPlugin.md`
+- 前端开发: `@docs/guide/PRD_Vue_Chat_UI.md`
+- 开发流程: `@docs/guide/Cursor_Development_Guide.md`
+
+---
+
+## 二、WebSocket 通信协议
+
+### 2.1 连接
+- 路径: `/ws`
+- 完整 URL: `ws://{host}:{port}/ws`（HTTP 则 `http` 替换为 `ws`）
+
+### 2.2 消息类型（前后端共用）
+
+| type | 方向 | payload/说明 |
+|------|------|--------------|
+| connected | 服务端→客户端 | clientId, sessionId, timestamp |
+| auth | 客户端→服务端 | { token } |
+| auth_success | 服务端→客户端 | — |
+| auth_failed | 服务端→客户端 | — |
+| chat | 客户端→服务端 | { content, images?, sessionId, threadId?, messageId } |
+| message | 服务端→客户端 | { id, role, content, timestamp, threadId? } |
+| file | 服务端→客户端 | { id, fileName, fileUrl, mimeType } |
+| ping | 客户端→服务端 | — |
+| pong | 服务端→客户端 | { timestamp } |
+| stop | 客户端→服务端 | { messageId } |
+| error | 服务端→客户端 | { error } |
+
+### 2.3 HTTP 路由（后端）
+- `GET /health` — 健康检查
+- `POST /auth` — 获取 JWT（body: { apiKey }）
+- `GET /config` — 前端能力与限制（features, limits）
+
+---
+
+## 三、后端插件规范（openclaw-web-channel）
+
+### 3.1 技术栈
+- Node.js ≥18, TypeScript 5.3+
+- ESM: `"type": "module"`
+- 依赖: ws, express, cors, jsonwebtoken, zod, uuid
+- peerDependencies: openclaw >=2026.2.0
+
+### 3.2 文件结构
+```
+openclaw-web-channel/
+├── openclaw.plugin.json
+├── package.json
+├── tsconfig.json
+├── src/
+│   ├── index.ts        # register(api) 入口
+│   ├── channel.ts      # ChannelPlugin 实现
+│   ├── server.ts       # WebChannelServer
+│   ├── config.ts       # Zod 配置校验
+│   ├── types.ts
+│   ├── handlers/
+│   │   ├── message.ts
+│   │   ├── connection.ts
+│   │   └── file.ts
+│   └── utils/
+│       ├── logger.ts
+│       ├── auth.ts
+│       └── formatter.ts
+└── tests/
+```
+
+### 3.3 必须实现
+1. **入口** `src/index.ts`  
+   - 导出默认函数 `register(api: OpenClawPluginApi)`
+   - 使用 Zod 校验 `api.pluginConfig`
+   - 注册 Channel、Service、HTTP 路由、可选 CLI
+
+2. **Channel** `src/channel.ts`  
+   - 实现 `ChannelPlugin` 接口
+   - id: `'web-channel'`
+   - capabilities: chatTypes, supportsAttachments, supportsStreaming, supportsThreading
+   - config: listAccountIds, resolveAccount
+   - outbound: sendText, sendFile（通过 getConnection(sessionId) 发 WebSocket）
+   - status: probe
+
+3. **Server** `src/server.ts`  
+   - Express + ws，path `/ws`
+   - WebClient: id, ws, sessionId, accountId, userId?, isAuthenticated
+   - handleMessage: auth, chat, ping
+   - chat 时调用 `ctx.call('agent.run', { message, channel, sessionId, threadId, context })`
+   - 提供 getConnection(sessionId)、getConnectionCount() 供 channel 使用
+
+### 3.4 配置 schema (Zod)
+- port, host, cors.origins, cors.credentials
+- auth.type ('jwt'|'apikey'), auth.secret, auth.expiration
+- accounts: Record<string, { enabled?, webhookUrl?, apiKey? }>
+
+### 3.5 错误处理
+- 所有 async 函数 try/catch，用 `api.logger` 记录
+- 客户端断开: `{ ok: false, error: 'Client disconnected', retryable: true }`
+- 非法消息: 发送 `{ type: 'error', error: 'Invalid message format' }`
+
+---
+
+## 四、前端 Vue 规范（web-channel-vue）
+
+### 4.1 技术栈
+- Vue 3.4+ (Composition API), TypeScript 5.3+, Vite 5
+- Pinia 2, VueUse 10, vue-i18n 9
+- marked + highlight.js, @iconify/vue
+
+### 4.2 目录结构
+```
+src/
+├── components/       ChatContainer, MessageItem, ChatInput, SessionList, ImagePreview, CodeBlock, ContextMenu, QuickCommands...
+├── composables/      useChat, useWebSocket, useSession, useTheme, useImageUpload, useAutoScroll
+├── stores/           chat, session, settings, connection
+├── utils/            markdown, format, commands, queue
+├── styles/           variables.css, themes/light.css, themes/dark.css
+├── locales/          zh-CN.json, en.json
+└── types/
+```
+
+### 4.3 组件规范
+- 使用 `<script setup lang="ts">`
+- props/emits 必须用 TypeScript 定义类型
+- 样式用 CSS 变量（`var(--primary-color)` 等），支持亮色/暗色主题
+
+### 4.4 Composables 职责
+- **useWebSocket**: 连接、认证、心跳、自动重连（指数退避，最多 5 次）、sendMessage、stopGeneration
+- **useChat**: 整合 store + WebSocket，send、流式接收、消息队列
+- **useTheme**: light/dark/system，监听 prefers-color-scheme
+- 单个 composable 建议 < 100 行，职责单一
+
+### 4.5 Store 设计
+- **chat**: messages Map<sessionId, Message[]>, currentSessionId, addMessage, updateMessage, clearMessages
+- **session**: sessions[], currentId, createSession, selectSession, deleteSession, resetSession, pinSession
+- **connection**: gatewayUrl, token, status (connected|reconnecting|failed|error)
+
+### 4.6 i18n
+- 键: chat.xxx, session.xxx, menu.xxx, commands.xxx
+- 默认 `navigator.language`，支持 zh-CN、en
+
+### 4.7 功能要点
+- 流式输出打字机效果（光标闪烁）
+- 代码块 hover 显示复制按钮
+- 消息长按 500ms / 右键显示 ContextMenu
+- 消息队列：发送中时排队，完成后自动发送下一条
+- 快捷指令: /model, /think, /new, /clear
+
+---
+
+## 五、TypeScript 规范
+
+### 5.1 类型
+- 严格类型，避免 `any`
+- 对象用 `interface`，联合/工具用 `type`
+- 导出用 `export type` / `export interface`
+
+### 5.2 错误处理
+```typescript
+// 推荐
+try {
+  await doSomething();
+} catch (e) {
+  logger.error('Failed', { error: e });
+  throw new AppError('Message', { cause: e });
+}
+
+// 避免
+try { await doSomething(); } catch (e) {}
+```
+
+### 5.3 异步
+- async 函数显式声明返回类型
+- 优先 async/await 而非 raw Promise
+
+### 5.4 文件大小
+- 单文件建议 < 500 行，超则拆分
+
+---
+
+## 六、Git 规范
+
+### 6.1 Commit
+- Conventional Commits: `type(scope): message`
+- 类型: feat, fix, docs, style, refactor, test, chore
+- 示例: `feat(web-channel): add JWT auth middleware`
+
+### 6.2 分支
+- 主分支: main
+- 功能: feat/xxx，修复: fix/xxx
+
+### 6.3 不提交
+- node_modules, dist, .env, 密钥
+- 使用 .cursorignore / .gitignore 排除
+
+---
+
+## 七、Cursor 使用建议
+
+### 7.1 开发前
+- 修改后端时在 Chat 中引用 `@docs/guide/PRD_WebChannelPlugin.md`
+- 修改前端时引用 `@docs/guide/PRD_Vue_Chat_UI.md`
+
+### 7.2 生成策略
+- 按模块拆分生成，避免一次性生成整个项目
+- 后端: 先 config + types → channel → server → index
+- 前端: 先 stores → composables → components
+
+### 7.3 测试
+- 后端: Vitest，mock OpenClaw Plugin API
+- 前端: 单元测试 + 与后端联调
+
+---
+
+## 八、回复与命名
+
+- 与用户交互使用**中文简体**
+- 代码注释、变量名、提交信息使用**英文**

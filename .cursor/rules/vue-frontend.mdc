@@ -1,0 +1,38 @@
+---
+description: Vue 聊天界面组件库开发规范
+globs: web-channel-vue/**/*
+alwaysApply: false
+---
+
+# Web Channel Vue 组件库规范
+
+## 技术栈
+- Vue 3.4+ (Composition API), TypeScript 5.3+, Vite 5
+- Pinia 2, VueUse 10, vue-i18n 9
+- marked + highlight.js, @iconify/vue
+
+## 目录约定
+```
+src/
+├── components/     # 可复用 UI 组件
+├── composables/    # useChat, useWebSocket, useTheme 等
+├── stores/         # Pinia: chat, session, settings, connection
+├── utils/          # markdown, format, commands, queue
+├── styles/         # CSS 变量 + themes
+├── locales/        # zh-CN.json, en.json
+└── types/
+```
+
+## 组件规范
+- 使用 `<script setup lang="ts">`
+- props/emits 必须用 TypeScript 定义类型
+- 样式使用 CSS 变量实现主题，避免硬编码颜色
+
+## Composables 规范
+- `useWebSocket`: 负责连接、认证、心跳、自动重连（指数退避）
+- `useChat`: 整合 store + WebSocket，处理发送、流式接收、队列
+- 单个 composable 职责单一，避免超过 ~100 行
+
+## i18n
+- 键路径: `chat.xxx`, `session.xxx`, `menu.xxx`, `commands.xxx`
+- 默认 `navigator.language`，支持 `zh-CN`、`en`

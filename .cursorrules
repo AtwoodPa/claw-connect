@@ -1,0 +1,18 @@
+# Claw-Connect 项目 Cursor 规则
+
+本项目为 OpenClaw Web Channel 全栈开发：后端插件 + Vue 聊天界面。  
+细分类规则在 `.cursor/rules/` 下，按文件类型/目录自动应用。
+
+## 快速参考
+- 后端 PRD: `docs/guide/PRD_WebChannelPlugin.md`
+- 前端 PRD: `docs/guide/PRD_Vue_Chat_UI.md`
+- 开发指南: `docs/guide/Cursor_Development_Guide.md`
+
+## 开发前
+1. 修改后端时引用 `@docs/guide/PRD_WebChannelPlugin.md`
+2. 修改前端时引用 `@docs/guide/PRD_Vue_Chat_UI.md`
+3. 遵守 `.cursor/rules/` 中的对应规范
+
+## 回复语言
+- 与用户交互时使用中文简体
+- 代码注释、变量名、提交信息可用英文
