@@ -1,0 +1,54 @@
+{
+  "setup": {
+    "title": "Connection Setup",
+    "description": "Configure the Web Channel service URL to connect to OpenClaw Agent. Ensure OpenClaw Gateway is running with the web-channel plugin installed.",
+    "gatewayUrl": "Service URL",
+    "gatewayUrlPlaceholder": "http://localhost:3010",
+    "gatewayUrlHint": "HTTP address where the web-channel plugin runs (default port 3000)",
+    "apiKey": "API Key (Optional)",
+    "apiKeyPlaceholder": "Fill this when server enforces apiKey",
+    "apiKeyHint": "Used when requesting JWT from /auth.",
+    "token": "Auth Token",
+    "tokenPlaceholder": "Leave empty and click the button below to auto-fetch",
+    "tokenHint": "Used for WebSocket auth, can be auto-fetched from /auth endpoint",
+    "fetchToken": "Fetch Token",
+    "fetching": "Fetching...",
+    "fetchTokenError": "Failed to fetch token: {msg}",
+    "connect": "Connect & Enter Chat",
+    "connecting": "Connecting..."
+  },
+  "chat": {
+    "newSession": "New Session",
+    "send": "Send",
+    "think": "Thinking...",
+    "stop": "Stop",
+    "disconnected": "Disconnected",
+    "reconnect": "Reconnect",
+    "reconnecting": "Reconnecting ({count})...",
+    "placeholder": "Type a message...",
+    "queued": "Queued: {count}",
+    "loadHistory": "Load History",
+    "historyFailed": "Failed to load history"
+  },
+  "session": {
+    "title": "Sessions",
+    "empty": "No sessions",
+    "delete": "Delete",
+    "reset": "Clear history",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "confirmDelete": "Delete this session?"
+  },
+  "menu": {
+    "copy": "Copy",
+    "copyCode": "Copy code",
+    "quote": "Quote",
+    "delete": "Delete"
+  },
+  "commands": {
+    "model": "Switch model",
+    "think": "Deep think",
+    "new": "New session",
+    "clear": "Clear history"
+  }
+}

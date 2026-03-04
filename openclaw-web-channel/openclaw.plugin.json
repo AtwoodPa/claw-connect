@@ -1,0 +1,47 @@
+{
+  "id": "web-channel",
+  "channels": ["web-channel"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "host": { "type": "string", "default": "127.0.0.1" },
+      "port": { "type": "number", "default": 3000 },
+      "gateway": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "wsUrl": { "type": "string" },
+          "token": { "type": "string" },
+          "requestTimeoutMs": { "type": "number" },
+          "connectTimeoutMs": { "type": "number" }
+        }
+      },
+      "cors": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "origins": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "string" } }
+            ]
+          },
+          "credentials": { "type": "boolean", "default": true }
+        }
+      },
+      "auth": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["secret"],
+        "properties": {
+          "type": { "type": "string", "enum": ["jwt", "apikey"], "default": "jwt" },
+          "secret": { "type": "string" },
+          "expiration": { "type": "number", "default": 7200 },
+          "apiKey": { "type": "string" }
+        }
+      }
+    },
+    "required": ["auth"]
+  }
+}

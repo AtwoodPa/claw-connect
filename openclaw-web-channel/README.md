@@ -1,47 +1,30 @@
 # OpenClaw Web Channel
 
-OpenClaw Channel Plugin，使浏览器通过 WebSocket/HTTP 与 OpenClaw Gateway 通信，实现 AI Agent 实时对话。
+将浏览器聊天界面通过 WebSocket/HTTP 接入 OpenClaw Gateway 的桥接插件。
+
+## 关键能力
+
+- 浏览器 WebSocket 会话管理（`/ws`）
+- JWT / API Key 鉴权（`/auth`）
+- 代理 Gateway RPC：`chat.send` / `chat.history` / `chat.abort` / `sessions.list`
+- 转发 Gateway 事件：`event:chat`（流式回复）、`event:agent`（工具/生命周期事件）
+- OpenClaw channel outbound 回推（可将 Gateway 对外发送结果回传到在线网页）
 
 ## 架构
 
 ```
-┌─────────────────┐      WebSocket/HTTP       ┌──────────────────┐
-│  Browser        │◄──────────────────────────►│  Web Channel     │
-│  (Vue/React)    │         /ws                │  Plugin (本项目)  │
-└─────────────────┘                           └────────┬─────────┘
-                                                       │ Plugin API
-                                              ┌────────▼─────────┐
-                                              │  OpenClaw        │
-                                              │  Gateway         │
-                                              └──────────────────┘
+Browser UI (web-channel-vue)
+      │  ws/http
+      ▼
+openclaw-web-channel (this plugin)
+      │  Gateway RPC + events
+      ▼
+OpenClaw Gateway
 ```
 
-## 技术栈
+## 配置示例
 
-- **Runtime**: Node.js ≥18
-- **Language**: TypeScript 5.3+
-- **Transport**: WebSocket (ws) + HTTP (Express)
-- **Auth**: JWT
-- **OpenClaw**: ≥2026.2.x
-
-## 快速开始
-
-### 安装
-
-```bash
-cd openclaw-web-channel
-npm install
-```
-
-### 构建
-
-```bash
-npm run build
-```
-
-### 配置 OpenClaw
-
-在 `~/.openclaw/openclaw.json` 中配置：
+`~/.openclaw/openclaw.json`：
 
 ```json
 {
@@ -49,104 +32,82 @@ npm run build
     "entries": {
       "web-channel": {
         "enabled": true,
-        "path": "/path/to/openclaw-web-channel"
+        "path": "/absolute/path/to/openclaw-web-channel"
       }
     }
   },
   "channels": {
     "web-channel": {
-      "port": 3000,
       "host": "0.0.0.0",
+      "port": 3000,
+      "gateway": {
+        "wsUrl": "ws://127.0.0.1:18789",
+        "token": "<gateway-auth-token>"
+      },
       "cors": {
-        "origins": ["http://localhost:5173", "https://yourdomain.com"],
+        "origins": ["http://localhost:5173"],
         "credentials": true
       },
       "auth": {
         "type": "jwt",
-        "secret": "your-secret-key-here",
-        "expiration": 7200
-      },
-      "accounts": {
-        "default": {
-          "enabled": true
-        }
+        "secret": "replace-with-strong-secret",
+        "expiration": 7200,
+        "apiKey": "optional-client-api-key"
       }
     }
   }
 }
 ```
 
-### 本地开发
-
-```bash
-# 安装依赖
-npm install
-
-# 构建（如需）
-npm run build
-
-# 链接到 OpenClaw 并启动 Gateway
-openclaw plugin install ./
-openclaw gateway
-```
-
 ## API
 
-### HTTP 路由
+### HTTP
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | /health | 健康检查 |
-| POST | /auth | 获取 JWT（body: `{ apiKey }`） |
-| GET | /config | 前端能力与限制 |
+| Method | Path | 说明 |
+|---|---|---|
+| GET | `/health` | 服务健康状态 |
+| POST | `/auth` | 获取 JWT（可带 `{ "apiKey": "..." }`） |
+| GET | `/config` | 前端可用能力与限制 |
+| GET | `/sessions` | 代理 `sessions.list` |
 
-### WebSocket
+### WebSocket (`/ws`)
 
-- **路径**: `/ws`
-- **URL**: `ws://{host}:{port}/ws`
+客户端发送：
 
-#### 消息类型
+- `auth`：`{ type: "auth", payload: { token } }`
+- `chat`：`{ type: "chat", payload: { content, sessionId?, sessionKey?, messageId? } }`
+- `history`：`{ type: "history", payload: { sessionId?, sessionKey?, limit? } }`
+- `stop`：`{ type: "stop", payload: { runId?, sessionId?, sessionKey? } }`
+- `sessions`：`{ type: "sessions", payload: { limit? } }`
+- `ping`
 
-| type | 方向 | 说明 |
-|------|------|------|
-| connected | 服务端→客户端 | 连接成功，含 clientId、sessionId |
-| auth | 客户端→服务端 | 认证，payload: `{ token }` |
-| auth_success / auth_failed | 服务端→客户端 | 认证结果 |
-| chat | 客户端→服务端 | 发送消息，payload: `{ content, sessionId, threadId?, messageId }` |
-| message | 服务端→客户端 | AI 回复 |
-| ping / pong | 双向 | 心跳 |
-| stop | 客户端→服务端 | 停止生成 |
-| error | 服务端→客户端 | 错误信息 |
+服务端返回（核心）：
 
-## 项目结构
+- `connected`
+- `auth_success` / `auth_failed`
+- `chat_ack`
+- `message`（流式增量 + `done` 结束标记）
+- `history`
+- `session_list`
+- `message_error`
+- `error`
+- `pong`
 
-```
-openclaw-web-channel/
-├── openclaw.plugin.json      # 插件清单
-├── package.json
-├── tsconfig.json
-├── src/
-│   ├── index.ts              # 入口 register(api)
-│   ├── channel.ts            # ChannelPlugin 实现
-│   ├── server.ts             # WebSocket/HTTP 服务
-│   ├── config.ts             # 配置校验 (Zod)
-│   ├── types.ts
-│   ├── handlers/
-│   └── utils/
-├── dist/                     # 编译输出
-└── tests/
+## 开发
+
+```bash
+cd openclaw-web-channel
+npm install
+npm run build
+npm run smoke:e2e
 ```
 
-## 脚本
+## 网关缺口分析
 
-| 命令 | 说明 |
-|------|------|
-| `npm run build` | 编译 TypeScript |
-| `npm run build:watch` | 监听模式编译 |
-| `npm run clean` | 清理 dist |
-| `npm test` | 运行测试 |
+已整理 OpenClaw Gateway 的“可接入但尚未实现”方法/事件清单：
+
+- [docs/openclaw-gateway-gap.md](./docs/openclaw-gateway-gap.md)
 
 ## 相关
 
-- 前端配套: [web-channel-vue](../web-channel-vue/)
-- PRD: [docs/guide/PRD_WebChannelPlugin.md](../docs/guide/PRD_WebChannelPlugin.md)
+- 前端配套：[../web-channel-vue](../web-channel-vue/)

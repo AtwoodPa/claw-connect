@@ -1,0 +1,54 @@
+{
+  "setup": {
+    "title": "连接配置",
+    "description": "配置 Web Channel 服务地址以连接 OpenClaw Agent。请确保 OpenClaw Gateway 已启动且已安装 web-channel 插件。",
+    "gatewayUrl": "服务地址",
+    "gatewayUrlPlaceholder": "http://localhost:3010",
+    "gatewayUrlHint": "Web Channel 插件运行的 HTTP 地址（默认端口 3010）",
+    "apiKey": "API Key（可选）",
+    "apiKeyPlaceholder": "如果后端启用了 apiKey 校验，请填写",
+    "apiKeyHint": "用于调用 /auth 获取 JWT。若未配置可留空。",
+    "token": "认证 Token",
+    "tokenPlaceholder": "留空可点击下方按钮自动获取",
+    "tokenHint": "用于 WebSocket 认证，可从 /auth 接口自动获取",
+    "fetchToken": "自动获取 Token",
+    "fetching": "获取中...",
+    "fetchTokenError": "获取 Token 失败: {msg}",
+    "connect": "连接并进入聊天",
+    "connecting": "连接中..."
+  },
+  "chat": {
+    "newSession": "新建会话",
+    "send": "发送",
+    "think": "思考中...",
+    "stop": "停止生成",
+    "disconnected": "连接已断开",
+    "reconnect": "重新连接",
+    "reconnecting": "正在重连 ({count})...",
+    "placeholder": "输入消息...",
+    "queued": "待发送消息: {count}",
+    "loadHistory": "加载历史",
+    "historyFailed": "历史加载失败"
+  },
+  "session": {
+    "title": "会话列表",
+    "empty": "暂无会话",
+    "delete": "删除会话",
+    "reset": "清空历史",
+    "pin": "置顶",
+    "unpin": "取消置顶",
+    "confirmDelete": "确定要删除这个会话吗？"
+  },
+  "menu": {
+    "copy": "复制文本",
+    "copyCode": "复制代码块",
+    "quote": "引用",
+    "delete": "删除"
+  },
+  "commands": {
+    "model": "切换模型",
+    "think": "深度思考",
+    "new": "新建会话",
+    "clear": "清空历史"
+  }
+}

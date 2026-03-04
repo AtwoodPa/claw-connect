@@ -1330,7 +1330,7 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(i18n)
 app.use(OpenClawChat, {
-  gatewayUrl: 'http://localhost:3000',
+  gatewayUrl: 'http://localhost:3010',
   wsOptions: {
     reconnect: true,
     maxReconnect: 5
@@ -1354,7 +1354,7 @@ app.mount('#app')
 <script setup lang="ts">
 import { ChatContainer } from '@openclaw/web-channel-vue'
 
-const gatewayUrl = 'http://localhost:3000'
+const gatewayUrl = 'http://localhost:3010'
 const authToken = localStorage.getItem('token')
 
 function handleError(error: Error) {
